@@ -151,7 +151,15 @@ class ZephyrTestRunMixin(
             result = response.json()
             
             test_runs = []
-            for test_run_data in result.get("results", []):
+            
+            # Handle direct array response from Zephyr API
+            if isinstance(result, list):
+                test_run_data_list = result
+            else:
+                # Handle wrapped response (fallback)
+                test_run_data_list = result.get("results", [])
+            
+            for test_run_data in test_run_data_list:
                 try:
                     test_run = ZephyrTestRun.from_api_response(test_run_data)
                     test_runs.append(test_run)
@@ -193,7 +201,15 @@ class ZephyrTestRunMixin(
             result = response.json()
             
             test_results = []
-            for result_data in result.get("results", []):
+            
+            # Handle direct array response from Zephyr API
+            if isinstance(result, list):
+                result_data_list = result
+            else:
+                # Handle wrapped response (fallback)
+                result_data_list = result.get("results", [])
+            
+            for result_data in result_data_list:
                 try:
                     test_result = ZephyrTestResult.from_api_response(result_data)
                     test_results.append(test_result)

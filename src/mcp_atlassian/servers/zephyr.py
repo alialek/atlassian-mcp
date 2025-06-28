@@ -31,7 +31,15 @@ async def get_testcase(
     ],
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, folder, status, priority, component, owner, "
+                "estimatedTime, labels, customFields, issueLinks, testScript. "
+                "If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
 ) -> str:
     """Get a test case by key.
@@ -63,7 +71,16 @@ async def create_testcase(
     ctx: Context,
     testcase_data: Annotated[
         str,
-        Field(description="JSON string containing test case data (name, projectKey, etc.)")
+        Field(
+            description=(
+                "JSON string containing test case data. Required: name, projectKey. "
+                "Optional fields: status, priority, component, folder, owner, estimatedTime, "
+                "labels, customFields, issueLinks, testScript. "
+                "Status values: 'Draft', 'Approved', 'Deprecated'. "
+                "Test script types: 'PLAIN_TEXT', 'STEP_BY_STEP', 'BDD'. "
+                "Example: {\"name\": \"Test login\", \"projectKey\": \"JQA\", \"status\": \"Draft\"}"
+            )
+        )
     ],
 ) -> str:
     """Create a new test case.
@@ -97,7 +114,17 @@ async def update_testcase(
     ],
     testcase_data: Annotated[
         str,
-        Field(description="JSON string containing updated test case data")
+        Field(
+            description=(
+                "JSON string containing updated test case data. "
+                "Available fields: name, status, priority, component, folder, owner, "
+                "estimatedTime, labels, customFields, issueLinks, testScript. "
+                "Note: projectKey cannot be changed. Only fields present will be updated. "
+                "Status values: 'Draft', 'Approved', 'Deprecated'. "
+                "Test script types: 'PLAIN_TEXT', 'STEP_BY_STEP', 'BDD'. "
+                "Example: {\"status\": \"Approved\", \"priority\": \"High\"}"
+            )
+        )
     ],
 ) -> str:
     """Update a test case.
@@ -160,32 +187,63 @@ async def search_testcases(
     ctx: Context,
     query: Annotated[
         str | None,
-        Field(description="TQL query string for filtering test cases", default=None)
+        Field(
+            description=(
+                "TQL (Test Query Language) query string for filtering test cases. "
+                "Available fields: projectKey, key, name, status, priority, component, folder, "
+                "estimatedTime, labels, owner, issueKeys, and custom fields (quoted). "
+                "Available operators: =, >, >=, <, <=, IN. Logical: AND. "
+                "Examples: "
+                "• 'projectKey = \"JQA\" AND status = \"Draft\"' "
+                "• 'projectKey = \"JQA\" AND status IN (\"Draft\", \"Approved\")' "
+                "• 'projectKey = \"JQA\" AND folder = \"/Test Folder\"' "
+                "• 'key IN (\"JQA-T50\", \"JQA-T60\")' "
+                "• 'projectKey = \"JQA\" AND \"Custom Field\" = \"Value\"'"
+            ),
+            default=None
+        )
     ] = None,
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, folder, status, priority, component, owner, "
+                "estimatedTime, labels, customFields, issueLinks, testScript. "
+                "If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
     start_at: Annotated[
         int,
-        Field(description="Offset for pagination", default=0)
+        Field(
+            description="Offset for pagination (0-based). Use with max_results for pagination.",
+            default=0,
+            ge=0
+        )
     ] = 0,
     max_results: Annotated[
         int,
-        Field(description="Maximum number of results to return", default=200)
+        Field(
+            description="Maximum number of results to return (1-200). Default: 200.",
+            default=200,
+            ge=1,
+            le=200
+        )
     ] = 200,
 ) -> str:
     """Search for test cases using TQL query.
     
     Args:
         ctx: The FastMCP context
-        query: TQL query string
-        fields: Optional fields to include
-        start_at: Pagination offset
-        max_results: Maximum results
+        query: TQL query string for filtering
+        fields: Optional fields to include in response
+        start_at: Pagination offset (0-based)
+        max_results: Maximum results (1-200)
         
     Returns:
-        JSON string with search results
+        JSON string with search results including test cases array and count
     """
     try:
         zephyr = await get_zephyr_fetcher(ctx)
@@ -210,7 +268,14 @@ async def get_testplan(
     ],
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, status, objective, testRuns, customFields, "
+                "folder, labels, owner. If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
 ) -> str:
     """Get a test plan by key.
@@ -242,7 +307,14 @@ async def create_testplan(
     ctx: Context,
     testplan_data: Annotated[
         str,
-        Field(description="JSON string containing test plan data (name, projectKey, etc.)")
+        Field(
+            description=(
+                "JSON string containing test plan data. Required: name, projectKey. "
+                "Optional fields: status, objective, folder, labels, customFields. "
+                "Example: {\"name\": \"Sprint 1 Test Plan\", \"projectKey\": \"JQA\", "
+                "\"objective\": \"Test user authentication features\"}"
+            )
+        )
     ],
 ) -> str:
     """Create a new test plan.
@@ -271,19 +343,47 @@ async def search_testplans(
     ctx: Context,
     query: Annotated[
         str | None,
-        Field(description="TQL query string for filtering test plans", default=None)
+        Field(
+            description=(
+                "TQL (Test Query Language) query string for filtering test plans. "
+                "Available fields: projectKey, key, name, status, folder, labels, owner, "
+                "issueKeys, and custom fields (quoted). "
+                "Available operators: =, >, >=, <, <=, IN. Logical: AND. "
+                "Examples: "
+                "• 'projectKey = \"JQA\" AND status = \"Draft\"' "
+                "• 'projectKey = \"JQA\" AND folder = \"/Test Plans\"' "
+                "• 'projectKey = \"JQA\" AND labels IN (\"Functional\", \"UI\")'"
+            ),
+            default=None
+        )
     ] = None,
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, status, objective, testRuns, customFields, "
+                "folder, labels, owner. If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
     start_at: Annotated[
         int,
-        Field(description="Offset for pagination", default=0)
+        Field(
+            description="Offset for pagination (0-based). Use with max_results for pagination.",
+            default=0,
+            ge=0
+        )
     ] = 0,
     max_results: Annotated[
         int,
-        Field(description="Maximum number of results to return", default=200)
+        Field(
+            description="Maximum number of results to return (1-200). Default: 200.",
+            default=200,
+            ge=1,
+            le=200
+        )
     ] = 200,
 ) -> str:
     """Search for test plans using TQL query.
@@ -321,7 +421,15 @@ async def get_testrun(
     ],
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, version, iteration, items, status, "
+                "plannedStartDate, plannedEndDate, customFields. "
+                "If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
 ) -> str:
     """Get a test run by key.
@@ -353,7 +461,16 @@ async def create_testrun(
     ctx: Context,
     testrun_data: Annotated[
         str,
-        Field(description="JSON string containing test run data (name, projectKey, etc.)")
+        Field(
+            description=(
+                "JSON string containing test run data. Required: name, projectKey. "
+                "Optional fields: plannedStartDate, plannedEndDate, testPlanKey, issueKey, "
+                "version, iteration, items (test cases), customFields. "
+                "Status values: 'Not Executed', 'In Progress', 'Done'. "
+                "Example: {\"name\": \"Sprint 1 Test Run\", \"projectKey\": \"JQA\", "
+                "\"testPlanKey\": \"JQA-P1234\"}"
+            )
+        )
     ],
 ) -> str:
     """Create a new test run.
@@ -382,19 +499,47 @@ async def search_testruns(
     ctx: Context,
     query: Annotated[
         str | None,
-        Field(description="TQL query string for filtering test runs", default=None)
+        Field(
+            description=(
+                "TQL (Test Query Language) query string for filtering test runs. "
+                "Available fields: projectKey, folder. "
+                "Available operators: =, IN. Logical: AND. "
+                "Examples: "
+                "• 'projectKey = \"JQA\"' "
+                "• 'projectKey IN (\"JQA\", \"DEF\")' "
+                "• 'projectKey = \"JQA\" AND folder = \"/Orbiter\"'"
+            ),
+            default=None
+        )
     ] = None,
     fields: Annotated[
         str | None,
-        Field(description="Optional comma-separated list of fields to include", default=None)
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, version, iteration, items, status, "
+                "plannedStartDate, plannedEndDate, customFields. "
+                "If not specified, all fields will be returned."
+            ),
+            default=None
+        )
     ] = None,
     start_at: Annotated[
         int,
-        Field(description="Offset for pagination", default=0)
+        Field(
+            description="Offset for pagination (0-based). Use with max_results for pagination.",
+            default=0,
+            ge=0
+        )
     ] = 0,
     max_results: Annotated[
         int,
-        Field(description="Maximum number of results to return", default=200)
+        Field(
+            description="Maximum number of results to return (1-200). Default: 200.",
+            default=200,
+            ge=1,
+            le=200
+        )
     ] = 200,
 ) -> str:
     """Search for test runs using TQL query.
@@ -429,7 +574,15 @@ async def create_testresult(
     ctx: Context,
     testresult_data: Annotated[
         str,
-        Field(description="JSON string containing test result data (testCaseKey, status, etc.)")
+        Field(
+            description=(
+                "JSON string containing test result data. Required: testCaseKey. "
+                "Optional fields: status, actualStartDate, actualEndDate, comment, "
+                "executedBy, environment, customFields. "
+                "Status values: 'Not Executed', 'In Progress', 'Pass', 'Fail', 'Blocked'. "
+                "Example: {\"testCaseKey\": \"JQA-T1234\", \"status\": \"Pass\", \"comment\": \"Test passed\"}"
+            )
+        )
     ],
 ) -> str:
     """Create a new test result for a test case.
@@ -806,5 +959,115 @@ async def add_multiple_test_steps(
             f"add_multiple_test_steps failed for issue '{issue_id}': {error_message}",
         )
         response_data = error_result
+    
+    return json.dumps(response_data, indent=2, ensure_ascii=False)
+
+
+# ==================== ENVIRONMENT TOOLS ====================
+
+@zephyr_mcp.tool(tags={"zephyr", "environment", "read"})
+async def get_environments(
+    ctx: Context,
+    project_key: Annotated[
+        str,
+        Field(description="The project key to get environments for (e.g., 'JQA')")
+    ],
+) -> str:
+    """Get all environments for a project.
+    
+    Args:
+        ctx: The FastMCP context
+        project_key: The project key
+        
+    Returns:
+        JSON string with list of environments for the project
+    """
+    try:
+        zephyr = await get_zephyr_fetcher(ctx)
+        environments = zephyr.get_environments(project_key)
+        response_data = {"success": True, "environments": environments, "count": len(environments)}
+    except Exception as e:
+        logger.exception(f"Error getting environments for project {project_key}")
+        response_data = {"success": False, "error": f"Failed to get environments: {e}"}
+    
+    return json.dumps(response_data, indent=2, ensure_ascii=False)
+
+
+@zephyr_mcp.tool(tags={"zephyr", "environment", "write"})
+@check_write_access
+async def create_environment(
+    ctx: Context,
+    environment_data: Annotated[
+        str,
+        Field(
+            description=(
+                "JSON string containing environment data. Required: name, projectKey. "
+                "Optional fields: description. Environment name must be unique per project. "
+                "Example: {\"name\": \"Production\", \"projectKey\": \"JQA\", \"description\": \"Production environment\"}"
+            )
+        )
+    ],
+) -> str:
+    """Create a new environment for a project.
+    
+    Args:
+        ctx: The FastMCP context
+        environment_data: JSON string with environment creation data
+        
+    Returns:
+        JSON string with the created environment ID
+    """
+    try:
+        zephyr = await get_zephyr_fetcher(ctx)
+        data = json.loads(environment_data)
+        environment_id = zephyr.create_environment(data)
+        response_data = {"success": True, "environment_id": environment_id}
+    except Exception as e:
+        logger.exception("Error creating environment")
+        response_data = {"success": False, "error": f"Failed to create environment: {e}"}
+    
+    return json.dumps(response_data, indent=2, ensure_ascii=False)
+
+
+# ==================== ISSUE LINK TOOLS ====================
+
+@zephyr_mcp.tool(tags={"zephyr", "issuelink", "read"})
+async def get_issue_testcases(
+    ctx: Context,
+    issue_key: Annotated[
+        str,
+        Field(description="The JIRA issue key to get linked test cases for (e.g., 'JQA-1234')")
+    ],
+    fields: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Optional comma-separated list of fields to include. "
+                "Available fields: key, name, folder, status, priority, component, owner, "
+                "estimatedTime, labels, customFields, issueLinks. "
+                "If not specified, all fields will be returned."
+            ),
+            default=None
+        )
+    ] = None,
+) -> str:
+    """Get all test cases linked to a JIRA issue.
+    
+    Args:
+        ctx: The FastMCP context
+        issue_key: The JIRA issue key
+        fields: Optional fields to include
+        
+    Returns:
+        JSON string with list of test cases linked to the issue
+    """
+    try:
+        zephyr = await get_zephyr_fetcher(ctx)
+        test_cases = zephyr.get_issue_testcases(issue_key, fields)
+        results = [tc.to_simplified_dict() for tc in test_cases] if test_cases else []
+        response_data = {"success": True, "test_cases": results, "count": len(results)}
+    except Exception as e:
+        logger.exception(f"Error getting test cases for issue {issue_key}")
+        response_data = {"success": False, "error": f"Failed to get test cases for issue: {e}"}
     
     return json.dumps(response_data, indent=2, ensure_ascii=False) 

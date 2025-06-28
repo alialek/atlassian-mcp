@@ -179,7 +179,15 @@ class ZephyrTestPlanMixin(
             result = response.json()
             
             test_plans = []
-            for test_plan_data in result.get("results", []):
+            
+            # Handle direct array response from Zephyr API
+            if isinstance(result, list):
+                test_plan_data_list = result
+            else:
+                # Handle wrapped response (fallback)
+                test_plan_data_list = result.get("results", [])
+            
+            for test_plan_data in test_plan_data_list:
                 try:
                     test_plan = ZephyrTestPlan.from_api_response(test_plan_data)
                     test_plans.append(test_plan)
