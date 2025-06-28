@@ -17,6 +17,14 @@ from mcp_atlassian.confluence import ConfluenceConfig, ConfluenceFetcher
 from mcp_atlassian.jira import JiraConfig, JiraFetcher
 from mcp_atlassian.servers.context import MainAppContext
 from mcp_atlassian.utils.oauth import OAuthConfig
+from mcp_atlassian.zephyr import (
+    ZephyrClient,
+    ZephyrConfig,
+    ZephyrTestCaseMixin,
+    ZephyrTestPlanMixin,
+    ZephyrTestResultMixin,
+    ZephyrTestRunMixin,
+)
 
 if TYPE_CHECKING:
     from mcp_atlassian.confluence.config import (
@@ -25,6 +33,22 @@ if TYPE_CHECKING:
     from mcp_atlassian.jira.config import JiraConfig as UserJiraConfigType
 
 logger = logging.getLogger("mcp-atlassian.servers.dependencies")
+
+
+class ZephyrFetcher(
+    ZephyrClient,
+    ZephyrTestCaseMixin,
+    ZephyrTestPlanMixin,
+    ZephyrTestResultMixin,
+    ZephyrTestRunMixin,
+):
+    """Zephyr data fetcher with all operations.
+    
+    This class provides a comprehensive interface for Zephyr operations,
+    combining the base client with all available operation mixins.
+    """
+
+    pass
 
 
 def _create_user_config_for_fetcher(
@@ -382,3 +406,38 @@ async def get_confluence_fetcher(ctx: Context) -> ConfluenceFetcher:
     raise ValueError(
         "Confluence client (fetcher) not available. Ensure server is configured correctly."
     )
+
+
+async def get_zephyr_fetcher(ctx: Context) -> ZephyrFetcher:
+    """Returns a ZephyrFetcher instance for test management operations.
+
+    Args:
+        ctx: The FastMCP context.
+
+    Returns:
+        ZephyrFetcher instance configured from environment variables.
+
+    Raises:
+        ValueError: If Zephyr configuration is not available or invalid.
+    """
+    logger.debug(f"get_zephyr_fetcher: ENTERED. Context ID: {id(ctx)}")
+    
+    try:
+        # Zephyr uses its own authentication system (Bearer token), not user-specific tokens
+        # So we always use global configuration from environment
+        zephyr_config = ZephyrConfig.from_env()
+        
+        if not zephyr_config.is_configured:
+            raise ValueError(
+                "Zephyr is not configured. Ensure ZEPHYR_API_TOKEN environment variable is set."
+            )
+        
+        logger.debug("get_zephyr_fetcher: Creating ZephyrFetcher with global config")
+        zephyr_fetcher = ZephyrFetcher(config=zephyr_config)
+        
+        logger.info("get_zephyr_fetcher: Successfully created ZephyrFetcher")
+        return zephyr_fetcher
+        
+    except Exception as e:
+        logger.error(f"get_zephyr_fetcher: Failed to create ZephyrFetcher: {e}")
+        raise ValueError(f"Zephyr client (fetcher) not available: {e}")

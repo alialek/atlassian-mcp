@@ -19,6 +19,8 @@ from mcp_atlassian.confluence import ConfluenceFetcher
 from mcp_atlassian.confluence.config import ConfluenceConfig
 from mcp_atlassian.jira import JiraFetcher
 from mcp_atlassian.jira.config import JiraConfig
+from mcp_atlassian.zephyr import ZephyrFetcher
+from mcp_atlassian.zephyr.config import ZephyrConfig
 from mcp_atlassian.utils.environment import get_available_services
 from mcp_atlassian.utils.io import is_read_only_mode
 from mcp_atlassian.utils.logging import mask_sensitive
@@ -27,6 +29,7 @@ from mcp_atlassian.utils.tools import get_enabled_tools, should_include_tool
 from .confluence import confluence_mcp
 from .context import MainAppContext
 from .jira import jira_mcp
+from .zephyr import zephyr_mcp
 
 logger = logging.getLogger("mcp-atlassian.server.main")
 
@@ -44,6 +47,7 @@ async def main_lifespan(app: FastMCP[MainAppContext]) -> AsyncIterator[dict]:
 
     loaded_jira_config: JiraConfig | None = None
     loaded_confluence_config: ConfluenceConfig | None = None
+    loaded_zephyr_config: ZephyrConfig | None = None
 
     if services.get("jira"):
         try:
@@ -75,9 +79,26 @@ async def main_lifespan(app: FastMCP[MainAppContext]) -> AsyncIterator[dict]:
         except Exception as e:
             logger.error(f"Failed to load Confluence configuration: {e}", exc_info=True)
 
+    # Load Zephyr configuration if available
+    if services.get("zephyr"):
+        try:
+            zephyr_config = ZephyrConfig.from_env()
+            if zephyr_config.is_auth_configured():
+                loaded_zephyr_config = zephyr_config
+                logger.info(
+                    "Zephyr configuration loaded and authentication is configured."
+                )
+            else:
+                logger.warning(
+                    "Zephyr environment variables found, but authentication is not fully configured. Zephyr tools will be unavailable."
+                )
+        except Exception as e:
+            logger.error(f"Failed to load Zephyr configuration: {e}", exc_info=True)
+
     app_context = MainAppContext(
         full_jira_config=loaded_jira_config,
         full_confluence_config=loaded_confluence_config,
+        full_zephyr_config=loaded_zephyr_config,
         read_only=read_only,
         enabled_tools=enabled_tools,
     )
@@ -98,6 +119,8 @@ async def main_lifespan(app: FastMCP[MainAppContext]) -> AsyncIterator[dict]:
                 logger.debug("Cleaning up Jira resources...")
             if loaded_confluence_config:
                 logger.debug("Cleaning up Confluence resources...")
+            if loaded_zephyr_config:
+                logger.debug("Cleaning up Zephyr resources...")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}", exc_info=True)
         logger.info("Main Atlassian MCP server lifespan shutdown complete.")
@@ -154,9 +177,10 @@ class AtlassianMCP(FastMCP[MainAppContext]):
                 )
                 continue
 
-            # Exclude Jira/Confluence tools if config is not fully authenticated
+            # Exclude Jira/Confluence/Zephyr tools if config is not fully authenticated
             is_jira_tool = "jira" in tool_tags
             is_confluence_tool = "confluence" in tool_tags
+            is_zephyr_tool = "zephyr" in tool_tags
             service_configured_and_available = True
             if app_lifespan_state:
                 if is_jira_tool and not app_lifespan_state.full_jira_config:
@@ -169,7 +193,12 @@ class AtlassianMCP(FastMCP[MainAppContext]):
                         f"Excluding Confluence tool '{registered_name}' as Confluence configuration/authentication is incomplete."
                     )
                     service_configured_and_available = False
-            elif is_jira_tool or is_confluence_tool:
+                if is_zephyr_tool and not app_lifespan_state.full_zephyr_config:
+                    logger.debug(
+                        f"Excluding Zephyr tool '{registered_name}' as Zephyr configuration/authentication is incomplete."
+                    )
+                    service_configured_and_available = False
+            elif is_jira_tool or is_confluence_tool or is_zephyr_tool:
                 logger.warning(
                     f"Excluding tool '{registered_name}' as application context is unavailable to verify service configuration."
                 )
@@ -328,6 +357,7 @@ class UserTokenMiddleware(BaseHTTPMiddleware):
 main_mcp = AtlassianMCP(name="Atlassian MCP", lifespan=main_lifespan)
 main_mcp.mount("jira", jira_mcp)
 main_mcp.mount("confluence", confluence_mcp)
+main_mcp.mount("zephyr", zephyr_mcp)
 
 
 @main_mcp.custom_route("/healthz", methods=["GET"], include_in_schema=False)

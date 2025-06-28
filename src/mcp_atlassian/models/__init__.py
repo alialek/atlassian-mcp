@@ -57,6 +57,17 @@ from .jira import (
     JiraWorklog,
 )
 
+# Zephyr models
+from .zephyr import (
+    TestStep,
+    TestStepRequest,
+    ZephyrTestCase,
+    ZephyrTestPlan,
+    ZephyrTestResult,
+    ZephyrTestRun,
+    ZephyrTestSteps,
+)
+
 # Additional models will be added as they are implemented
 
 __all__ = [
@@ -104,4 +115,12 @@ __all__ = [
     "ConfluenceVersion",
     "ConfluenceSearchResult",
     "ConfluenceAttachment",
+    # Zephyr models
+    "TestStep",
+    "TestStepRequest",
+    "ZephyrTestCase",
+    "ZephyrTestPlan",
+    "ZephyrTestResult",
+    "ZephyrTestRun",
+    "ZephyrTestSteps",
 ]

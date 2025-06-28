@@ -118,6 +118,12 @@ def get_available_services() -> dict[str, bool | None]:
             "Using Jira minimal OAuth configuration - expecting user-provided tokens via headers"
         )
 
+    # Check Zephyr configuration
+    zephyr_is_setup = False
+    if os.getenv("ZEPHYR_API_TOKEN"):
+        zephyr_is_setup = True
+        logger.info("Using Zephyr test management Bearer token authentication")
+
     if not confluence_is_setup:
         logger.info(
             "Confluence is not configured or required environment variables are missing."
@@ -126,5 +132,9 @@ def get_available_services() -> dict[str, bool | None]:
         logger.info(
             "Jira is not configured or required environment variables are missing."
         )
+    if not zephyr_is_setup:
+        logger.info(
+            "Zephyr is not configured or required environment variable (ZEPHYR_API_TOKEN) is missing."
+        )
 
-    return {"confluence": confluence_is_setup, "jira": jira_is_setup}
+    return {"confluence": confluence_is_setup, "jira": jira_is_setup, "zephyr": zephyr_is_setup}
