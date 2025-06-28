@@ -16,11 +16,9 @@ class ZephyrConfig:
 
     # Required settings
     api_token: str
-    
-    # Optional settings
     base_url: str
     
-    # Performance settings
+    # Optional settings
     timeout: int = 30
     max_retries: int = 3
     retry_delay: float = 1.0
@@ -43,14 +41,19 @@ class ZephyrConfig:
         
         # Required settings
         api_token = os.getenv("ZEPHYR_API_TOKEN")
+        base_url = os.getenv("ZEPHYR_BASE_URL")
         
         if not api_token:
             raise ValueError(
                 "Zephyr configuration requires ZEPHYR_API_TOKEN environment variable"
             )
+            
+        if not base_url:
+            raise ValueError(
+                "Zephyr configuration requires ZEPHYR_BASE_URL environment variable"
+            )
         
         # Optional settings with defaults
-        base_url = os.getenv("ZEPHYR_BASE_URL", "")
         timeout = int(os.getenv("ZEPHYR_TIMEOUT", "30"))
         max_retries = int(os.getenv("ZEPHYR_MAX_RETRIES", "3"))
         retry_delay = float(os.getenv("ZEPHYR_RETRY_DELAY", "1.0"))
@@ -97,7 +100,7 @@ class ZephyrConfig:
 
     def is_auth_configured(self) -> bool:
         """Check if authentication is properly configured."""
-        return bool(self.api_token)
+        return bool(self.api_token and self.base_url)
 
     @property
     def is_configured(self) -> bool:

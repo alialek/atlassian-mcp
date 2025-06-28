@@ -19,7 +19,7 @@ from mcp_atlassian.confluence import ConfluenceFetcher
 from mcp_atlassian.confluence.config import ConfluenceConfig
 from mcp_atlassian.jira import JiraFetcher
 from mcp_atlassian.jira.config import JiraConfig
-from mcp_atlassian.zephyr import ZephyrFetcher
+from .dependencies import ZephyrFetcher
 from mcp_atlassian.zephyr.config import ZephyrConfig
 from mcp_atlassian.utils.environment import get_available_services
 from mcp_atlassian.utils.io import is_read_only_mode

@@ -120,9 +120,13 @@ def get_available_services() -> dict[str, bool | None]:
 
     # Check Zephyr configuration
     zephyr_is_setup = False
-    if os.getenv("ZEPHYR_API_TOKEN"):
+    if os.getenv("ZEPHYR_API_TOKEN") and os.getenv("ZEPHYR_BASE_URL"):
         zephyr_is_setup = True
         logger.info("Using Zephyr test management Bearer token authentication")
+    elif os.getenv("ZEPHYR_API_TOKEN") and not os.getenv("ZEPHYR_BASE_URL"):
+        logger.warning("Zephyr API token found but ZEPHYR_BASE_URL is missing - Zephyr service will not be available")
+    elif os.getenv("ZEPHYR_BASE_URL") and not os.getenv("ZEPHYR_API_TOKEN"):
+        logger.warning("Zephyr base URL found but ZEPHYR_API_TOKEN is missing - Zephyr service will not be available")
 
     if not confluence_is_setup:
         logger.info(

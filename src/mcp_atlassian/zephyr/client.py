@@ -9,7 +9,6 @@ import httpx
 from mcp_atlassian.exceptions import MCPAtlassianAuthenticationError
 from mcp_atlassian.models.zephyr import TestStep, TestStepRequest, ZephyrTestSteps
 from mcp_atlassian.utils.logging import get_masked_session_headers, log_config_param
-from mcp_atlassian.utils.ssl import configure_ssl_verification
 
 from .auth import ZephyrAuth
 from .config import ZephyrConfig
@@ -47,7 +46,7 @@ class ZephyrClient:
 
     def _initialize_http_client(self) -> None:
         """Initialize the HTTP client."""
-        # Create HTTP client
+        # Create HTTP client with SSL configuration
         self._http_client = httpx.Client(
             base_url=self.config.base_url,
             timeout=httpx.Timeout(self.config.timeout),
@@ -55,13 +54,13 @@ class ZephyrClient:
             verify=self.config.ssl_verify,
         )
 
-        # Configure SSL verification using the shared utility
-        configure_ssl_verification(
-            service_name="Zephyr",
-            url=self.config.base_url,
-            session=self._http_client,  # httpx.Client has similar interface
-            ssl_verify=self.config.ssl_verify,
-        )
+        # Log SSL configuration
+        if not self.config.ssl_verify:
+            logger.warning(
+                "Zephyr SSL verification disabled. This is insecure and should only be used in testing environments."
+            )
+        else:
+            logger.debug("Zephyr SSL verification enabled")
 
         # Proxy configuration
         proxies = {}

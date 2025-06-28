@@ -36,7 +36,6 @@ logger = logging.getLogger("mcp-atlassian.servers.dependencies")
 
 
 class ZephyrFetcher(
-    ZephyrClient,
     ZephyrTestCaseMixin,
     ZephyrTestPlanMixin,
     ZephyrTestResultMixin,
@@ -45,7 +44,8 @@ class ZephyrFetcher(
     """Zephyr data fetcher with all operations.
     
     This class provides a comprehensive interface for Zephyr operations,
-    combining the base client with all available operation mixins.
+    combining all available operation mixins. Each mixin already inherits
+    from ZephyrClient, so we don't need to inherit from it directly.
     """
 
     pass
