@@ -6,7 +6,7 @@
 [![Run Tests](https://github.com/sooperset/mcp-atlassian/actions/workflows/tests.yml/badge.svg)](https://github.com/sooperset/mcp-atlassian/actions/workflows/tests.yml)
 ![License](https://img.shields.io/github/license/sooperset/mcp-atlassian)
 
-Model Context Protocol (MCP) server for Atlassian products (Confluence and Jira). This integration supports both Confluence & Jira Cloud and Server/Data Center deployments.
+Model Context Protocol (MCP) server for Atlassian products (Confluence, Jira, Zephyr). 
 
 ## Example Usage
 
@@ -19,13 +19,6 @@ Ask your AI assistant to:
 
 ### Feature Demo
 
-https://github.com/user-attachments/assets/35303504-14c6-4ae4-913b-7c25ea511c3e
-
-<details> <summary>Confluence Demo</summary>
-
-https://github.com/user-attachments/assets/7fe9c488-ad0c-4876-9b54-120b666bb785
-
-</details>
 
 ### Compatibility
 
@@ -35,6 +28,7 @@ https://github.com/user-attachments/assets/7fe9c488-ad0c-4876-9b54-120b666bb785
 | **Confluence** | Server/Data Center | ✅ Supported (version 6.0+)  |
 | **Jira**       | Cloud              | ✅ Fully supported           |
 | **Jira**       | Server/Data Center | ✅ Supported (version 8.14+) |
+| **Zephyr**     | Server/Data Center | ✅ Supported                 |
 
 ## Quick Start Guide
 
@@ -106,9 +100,6 @@ To use this method, set the following environment variables (or use the correspo
 This option is useful in scenarios where OAuth credential management is centralized or handled by other infrastructure components.
 </details>
 
-> [!TIP]
-> **Multi-Cloud OAuth Support**: If you're building a multi-tenant application where users provide their own OAuth tokens, see the [Multi-Cloud OAuth Support](#multi-cloud-oauth-support) section for minimal configuration setup.
-
 ### 📦 2. Installation
 
 MCP Atlassian is distributed as a Docker image. This is the recommended way to run the server, especially for IDE integration. Ensure you have Docker installed.
@@ -117,18 +108,6 @@ MCP Atlassian is distributed as a Docker image. This is the recommended way to r
 # Pull Pre-built Image
 docker pull ghcr.io/sooperset/mcp-atlassian:latest
 ```
-
-## 🛠️ IDE Integration
-
-MCP Atlassian is designed to be used with AI assistants through IDE integration.
-
-> [!TIP]
-> **For Claude Desktop**: Locate and edit the configuration file directly:
-> - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-> - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-> - **Linux**: `~/.config/Claude/claude_desktop_config.json`
->
-> **For Cursor**: Open Settings → MCP → + Add new global MCP server
 
 ### ⚙️ Configuration Methods
 
